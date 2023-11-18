@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detect a Doggo</title>
+</head>
+<body>
+    <h1>Detect a Doggo</h1>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".png, .jpg, .jpeg, .gif">
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if filename %}
+        <h2>Uploaded Dog Image: {{ filename }}</h2>
+        <!-- Will be expanded upon when the model is added -->
+    {% endif %}
+</body>
+</html>
