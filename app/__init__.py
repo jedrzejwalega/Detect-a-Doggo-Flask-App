@@ -1,5 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
 import os
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from PIL import Image
+from flask import jsonify
+from transformers import AutoImageProcessor, ConvNextV2ForImageClassification
+from torch import no_grad
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -24,12 +28,38 @@ def index():
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            # Add your image recognition logic here
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
 
-            return render_template('index.html', filename=filename)
+            predicted_dog_breed = predict_dog_breed(file_path)
+
+            return render_template('index.html', filename=filename, predicted_dog_breed=predicted_dog_breed)
 
     return render_template('index.html')
+
+def predict_dog_breed(image_path):
+    model_name = "Pavarissy/ConvNextV2-large-DogBreed"
+    preprocessor = AutoImageProcessor.from_pretrained(model_name)
+    model = ConvNextV2ForImageClassification.from_pretrained(model_name)
+
+    try:
+        image = Image.open(image_path)
+    except Exception as e:
+        print(f"Error opening image: {e}")
+        return jsonify({"error": "Error opening image"}), 500
+
+    inputs = preprocessor(image, return_tensors="pt")
+    with no_grad():
+        logits = model(**inputs).logits
+    predicted_label = logits.argmax(-1).item()
+    predicted_dog_breed = model.config.id2label[predicted_label]
+
+    return predicted_dog_breed
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    parent_directory = os.path.abspath(os.path.join(app.root_path, os.pardir))
+    return send_from_directory(os.path.join(parent_directory, app.config['UPLOAD_FOLDER']), filename)
 
 if __name__ == '__main__':
     app.run(debug=True)

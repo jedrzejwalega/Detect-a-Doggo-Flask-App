@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 flask = "*"
+pillow = "*"
+transformers = "*"
+torch = "*"
 
 [dev-packages]
 
